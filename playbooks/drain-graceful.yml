@@ -1,0 +1,16 @@
+# Graceful drain playbook
+
+---
+  - hosts: webservers
+    #become: true
+    gather_facts: no
+
+    vars_files:
+      - ../vars/cbolvars.yml # cbol variables
+
+    tasks:
+      - name: CBOL Graceful Drain
+        command: mv "{{ path_to_grace_session_file }}" "{{ path_to_grace_session_file + '_drain' }}"
+        args:
+          removes: "{{ path_to_grace_session_file }}"
+          creates: "{{ path_to_grace_session_file + '_drain' }}"

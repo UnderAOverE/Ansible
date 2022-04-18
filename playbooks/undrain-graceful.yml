@@ -1,0 +1,16 @@
+# Graceful undrain playbook
+
+---
+  - hosts: webservers
+    #become: true
+    gather_facts: no
+
+    vars_files:
+      - ../vars/cbolvars.yml # cbol variables
+
+    tasks:
+      - name: CBOL Graceful Undrain
+        command: mv "{{ path_to_grace_session_file + '_drain' }}" "{{ path_to_grace_session_file }}"
+        args:
+          removes: "{{ path_to_grace_session_file + '_drain' }}"
+          creates: "{{ path_to_grace_session_file }}"

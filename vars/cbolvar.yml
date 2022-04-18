@@ -1,0 +1,5 @@
+# cbolvar.yml variables file
+
+---
+path_to_grace_session_file: "/home/cloud_user/cbol/sessions.html"
+path_to_datacenter_session_file: "/home/cloud_user/cbol/datacenter.html"

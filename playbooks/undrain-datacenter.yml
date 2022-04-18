@@ -1,0 +1,21 @@
+# Datacenter undrain playbook
+
+---
+  - hosts: webservers
+    #become: true
+    gather_facts: no
+
+    vars_files:
+      - ../vars/cbolvars.yml # cbol variables
+
+    tasks:
+      - name: CBOL Datacenter Undrain
+        command: mv "{{ path_to_datacenter_session_file + '_drain' }}" "{{ path_to_datacenter_session_file }}"
+        args:
+          removes: "{{ path_to_datacenter_session_file + '_drain' }}"
+          creates: "{{ path_to_datacenter_session_file }}"
+        notify: start nginx
+
+    handlers:
+      - name: start nginx
+        shell: /home/cloud_user/cbol/start.sh

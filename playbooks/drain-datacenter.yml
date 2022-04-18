@@ -1,0 +1,22 @@
+# Datacenter drain playbook
+
+---
+  - hosts: webservers
+    #become: true
+    gather_facts: no
+
+    vars_files:
+      - ../vars/cbolvars.yml # cbol variables
+
+    tasks:
+      - name: CBOL Datacenter Drain
+        command: mv "{{ path_to_datacenter_session_file }}" "{{ path_to_datacenter_session_file + '_drain' }}"
+        args:
+          removes: "{{ path_to_datacenter_session_file }}"
+          creates: "{{ path_to_datacenter_session_file + '_drain' }}"
+        notify: stop nginx
+        tags: cbol
+
+    handlers:
+      - name: stop nginx
+        shell: /home/cloud_user/cbol/stop.sh
