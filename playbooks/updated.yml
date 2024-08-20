@@ -1,0 +1,77 @@
+---
+- hosts: all
+  vars:
+    temp_directory: "/opt/otc_scripts"
+    script_archive: "{{ temp_directory }}.tgz"
+    instances_list: "{{ instances_list }}"  # Assuming these are passed variables
+    csi_id: "{{ csi_id }}"
+    stack_name: "{{ stack_name }}"
+    fid_name: "{{ fid_name }}"
+    full_path: "{{ full_path }}"
+    local_filename: "{{ local_filename }}"
+
+  tasks:
+    - name: Remove temp directory if it exists
+      file:
+        path: "{{ temp_directory }}"
+        state: absent
+
+    - name: Download otc_scripts.tgz
+      get_url:
+        url: "{{ artifactory_url }}"
+        url_username: "{{ cti_ans_art_auth_username }}"
+        url_password: "{{ cti_ans_art_auth_apikey }}"
+        dest: "{{ script_archive }}"
+      tags: download
+
+    - name: Create temp directory if it does not exist
+      file:
+        path: "{{ temp_directory }}"
+        state: directory
+        mode: '0755'
+
+    - name: Unzip otc_scripts package
+      unarchive:
+        src: "{{ script_archive }}"
+        dest: "{{ temp_directory }}"
+        remote_src: yes
+
+    - name: Ensure correct permissions on directories
+      find:
+        paths: "{{ temp_directory }}"
+        recurse: yes
+        patterns: '*'
+      register: found_items
+
+    - name: Set permissions on directories
+      file:
+        path: "{{ item.path }}"
+        state: directory
+        mode: '0755'
+      with_items: "{{ found_items.files }}"
+      when: item.isdir is defined and item.isdir == true
+
+    - name: Set permissions on files
+      file:
+        path: "{{ item.path }}"
+        state: file
+        mode: '0755'
+      with_items: "{{ found_items.files }}"
+      when: item.isfile is defined and item.isfile == true
+
+    - name: Manage instances
+      shell: |
+        {{ temp_directory }}/shell/onetouchcob.sh --{{ item.action }} {{ item.stack_name }} --instance {{ instances_list }} --csi_id {{ csi_id }}{{ item.extra_args | default('') }}
+      loop:
+        - { action: "stop", stack_name: "{{ stack_name }}" }
+        - { action: "start", stack_name: "{{ stack_name }}" }
+        - { action: "stop", stack_name: "{{ stack_name }}", extra_args: " --path {{ full_path }} --fid {{ fid_name }}" }
+        - { action: "start", stack_name: "{{ stack_name }}", extra_args: " --path {{ full_path }} --fid {{ fid_name }}" }
+        - { action: "import", stack_name: "{{ stack_name }}", extra_args: " --localfile {{ local_filename }}" }
+        - { action: "export", stack_name: "{{ stack_name }}", extra_args: " --localfile {{ local_filename }}" }
+
+    - name: Handle stack operations
+      shell: "{{ temp_directory }}/shell/onetouchcob.sh --stack {{ stack_name }} --{{ action_type }} {{ action_name }}"
+      loop:
+        - { action_type: "drain", action_name: "object" }
+        - { action_type: "fill", action_name: "object" }
