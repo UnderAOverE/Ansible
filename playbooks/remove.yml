@@ -1,0 +1,12 @@
+- hosts: all
+  tasks:
+    - name: Remove the directory /opt/otc
+      file:
+        path: /opt/otc
+        state: absent
+        recurse: yes  # This ensures the directory is removed even if it contains files
+
+    - name: Remove the file /opt/otc.tgz
+      file:
+        path: /opt/otc.tgz
+        state: absent
